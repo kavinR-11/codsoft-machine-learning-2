@@ -1,0 +1,36 @@
+
+!pip install scikit-learn pandas numpy
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+try:
+    df = pd.read_csv('creditcard.csv')
+except FileNotFoundError:
+    print("Dataset not found. Please upload 'creditcard.csv' or provide the correct path.")
+    exit()
+
+#Separate features (X) and target (y)
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+#Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+#Train a Logistic Regression model
+model = LogisticRegression(solver='liblinear', random_state=42) # Using liblinear for smaller datasets
+model.fit(X_train, y_train)
+
+#Predict on the test set
+y_pred = model.predict(X_test)
+
+#Evaluate the model
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+print("\nAccuracy Score:")
+print(accuracy_score(y_test, y_pred))
