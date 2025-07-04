@@ -1,0 +1,76 @@
+
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.preprocessing import StandardScaler
+
+#Load the dataset (replace 'your_churn_data.csv' with the actual filename)
+#Assuming your data is in a CSV file
+try:
+  df = pd.read_csv('your_churn_data.csv')
+except FileNotFoundError:
+  print("Please upload 'your_churn_data.csv' to your Colab environment.")
+  # Create a dummy dataset for demonstration if the file is not found
+  print("Creating a dummy dataset for demonstration.")
+  data = {
+      'customer_id': range(1000),
+      'age': np.random.randint(18, 70, 1000),
+      'gender': np.random.choice(['Male', 'Female'], 1000),
+      'monthly_charges': np.random.uniform(20, 120, 1000),
+      'total_charges': np.random.uniform(50, 5000, 1000),
+      'contract_type': np.random.choice(['Month-to-month', 'One year', 'Two year'], 1000),
+      'internet_service': np.random.choice(['DSL', 'Fiber optic', 'No'], 1000),
+      'churn': np.random.choice([0, 1], 1000, p=[0.7, 0.3]) # 0 for not churned, 1 for churned
+  }
+  df = pd.DataFrame(data)
+  df['total_charges'] = df['total_charges'].astype(str) # Simulate some non-numeric data
+  df.loc[df.sample(frac=0.02).index, 'total_charges'] = ' ' # Introduce some empty strings
+  df.to_csv('your_churn_data.csv', index=False)
+  print("Dummy 'your_churn_data.csv' created.")
+  df = pd.read_csv('your_churn_data.csv')
+
+
+#Data Preprocessing
+#Handle missing values (if any). A common approach is to drop rows or impute.
+df.dropna(inplace=True)
+
+#Convert 'Total Charges' to numeric, coercing errors to NaN and then dropping NaNs
+df['total_charges'] = pd.to_numeric(df['total_charges'], errors='coerce')
+df.dropna(inplace=True)
+
+
+#Convert categorical features to dummy variables
+categorical_cols = ['gender', 'contract_type', 'internet_service'] # Add other categorical columns here
+df = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
+
+#Define features (X) and target (y)
+#Exclude the customer_id column and the original categorical columns if they weren't dropped
+X = df.drop(['customer_id', 'churn'], axis=1)
+y = df['churn']
+
+#Scale numerical features
+numerical_cols = ['age', 'monthly_charges', 'total_charges'] # Add other numerical columns here
+scaler = StandardScaler()
+X[numerical_cols] = scaler.fit_transform(X[numerical_cols])
+
+
+#Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+#Model Training (Logistic Regression)
+model = LogisticRegression(random_state=42)
+model.fit(X_train, y_train)
+
+#Model Evaluation
+y_pred = model.predict(X_test)
+
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nAccuracy Score:")
+print(accuracy_score(y_test, y_pred))
